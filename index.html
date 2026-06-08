@@ -37,8 +37,8 @@
   /* Pot-kleuren (zelfde logica als in Excel) */
   --pot1:#3f9d57; --pot2:#3f7dbf; --pot3:#c9a227; --pot4:#cf6b2f;
 
-  --title:    "MODERO WK RAFFLE 2026";
-  --subtitle: "Live klassement Puntencompetitie";
+  --title:    "WK RAFFLE 2026";
+  --subtitle: "Modero IT — Live Klassement Puntencompetitie";
 }
 
 /* ================================================================
@@ -94,6 +94,10 @@ h1{
   display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px;
   align-items:end;margin:0 auto clamp(28px,5vw,44px);max-width:680px;
 }
+.podium.podium-empty{display:block;max-width:560px}
+.podium-msg{text-align:center;color:var(--text-dim);font-size:.9rem;
+  background:linear-gradient(180deg,var(--card),rgba(16,47,40,.4));
+  border:1px dashed var(--line);border-radius:16px;padding:26px 20px}
 .pod{
   background:linear-gradient(180deg,var(--card),rgba(16,47,40,.5));
   border:1px solid var(--line);border-radius:16px;
@@ -1021,6 +1025,8 @@ function buildKlassement(){
   let i=0;
   while(i<eligible.length && place<=PRIZE_TIERS.length){
     let j=i; while(j<eligible.length && eligible[j].score===eligible[i].score) j++;
+    // alleen ploegen met punten komen op een prijsplaats; bij 0 stoppen we
+    if(eligible[i].score<=0) break;
     const groupSize=j-i;
     const tierPct=PRIZE_TIERS[place-1];     // vast % van DEZE plaats
     const share=tierPct/groupSize;          // gedeeld over de ex aequo
@@ -1084,8 +1090,10 @@ function renderKlassement(){
   if(tierCards.length){
     const arranged=[tierCards[1]||null, tierCards[0]||null, tierCards[2]||null];
     podium.innerHTML = arranged.map(c=>c?c.html:'<div></div>').join('');
+    podium.classList.remove('podium-empty');
   } else {
-    podium.innerHTML='';
+    podium.innerHTML='<div class="podium-msg">Nog geen punten — het podium verschijnt zodra de eerste resultaten binnen zijn.</div>';
+    podium.classList.add('podium-empty');
   }
 
   // ---- Volledige tabel ----
