@@ -1005,12 +1005,22 @@ function buildKlassement(){
   // sorteer op eindscore (hoog->laag), gelijke stand alfabetisch
   rows.sort((a,b)=> b.score-a.score || a.name.localeCompare(b.name,'nl'));
 
-  // --- gedeelde RANG toekennen (zelfde score = zelfde plaats) ---
-  let rank=0, seen=0, prevScore=null;
+  // --- weergegeven PLAATS ---
+  // Deelnemers MET punten: gedeelde plaats bij gelijke score, doorlopend
+  //   genummerd (elke verschillende score = volgend nummer).
+  // Deelnemers met 0 punten: elk een eigen oplopend nummer (alfabetisch,
+  //   want zo gesorteerd), beginnend na de laatste plaats van de scorenden.
+  let pos=0, prevScore=null;
   rows.forEach(r=>{
-    seen++;
-    if(prevScore===null || r.score!==prevScore){ rank=seen; prevScore=r.score; }
-    r.rank=rank;
+    if(r.score>0){
+      if(prevScore===null || r.score!==prevScore){ pos++; prevScore=r.score; }
+      r.rank=pos;
+    } else {
+      // 0 punten: tel telkens +1 door
+      pos++;
+      r.rank=pos;
+      prevScore=r.score; // 0
+    }
   });
 
   // --- prijsverdeling: enkel niet-uitgesloten deelnemers ---
