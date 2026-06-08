@@ -37,8 +37,8 @@
   /* Pot-kleuren (zelfde logica als in Excel) */
   --pot1:#3f9d57; --pot2:#3f7dbf; --pot3:#c9a227; --pot4:#cf6b2f;
 
-  --title:    "Modero WK RAFFLE 2026";
-  --subtitle: "Live Klassement Puntencompetitie";
+  --title:    "MODERO WK RAFFLE 2026";
+  --subtitle: "Live klassement Puntencompetitie";
 }
 
 /* ================================================================
@@ -159,6 +159,10 @@ h1{
 .prize-tag.t2{background:var(--silver);color:#22282e}
 .prize-tag.t3{background:var(--bronze);color:#2a1500}
 .prize-tag.t4{background:var(--fourth);color:#06203f}
+.prize-tag.tex{background:#3a4a44;color:#9fb3ab}
+.row.excluded{opacity:.4;filter:grayscale(1)}
+.row.excluded .score{color:var(--text-dim)}
+.row.excluded .pos{color:var(--text-dim)}
 
 /* ----- FOOTER / paneel ----- */
 footer{text-align:center;margin-top:36px;color:var(--text-dim);font-size:.8rem;line-height:1.7}
@@ -246,8 +250,8 @@ footer .powered .brand{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;let
 <div class="wrap">
   <header>
     <span class="badge" id="liveBadge">Live</span>
-    <h1 id="title">MODERO IT WK RAFFLE 2026</h1>
-    <p class="subtitle" id="subtitle">Live Klassement Puntencompetitie</p>
+    <h1 id="title">WK RAFFLE 2026</h1>
+    <p class="subtitle" id="subtitle">Modero IT — Live Klassement Puntencompetitie</p>
     <p class="updated" id="updated"></p>
   </header>
 
@@ -534,9 +538,9 @@ document.getElementById('subtitle').textContent =
 const WC_GROUPS = {"A": ["Mexico", "South Africa", "South Korea", "Czechia"], "B": ["Canada", "Bosnia-Herzegovina", "Qatar", "Switzerland"], "C": ["Brazil", "Morocco", "Haiti", "Scotland"], "D": ["United States", "Paraguay", "Australia", "Turkiye"], "E": ["Germany", "Curacao", "Ivory Coast", "Ecuador"], "F": ["Netherlands", "Japan", "Sweden", "Tunisia"], "G": ["Belgium", "Egypt", "Iran", "New Zealand"], "H": ["Spain", "Cape Verde", "Saudi Arabia", "Uruguay"], "I": ["France", "Senegal", "Iraq", "Norway"], "J": ["Argentina", "Algeria", "Austria", "Jordan"], "K": ["Portugal", "Congo DR", "Uzbekistan", "Colombia"], "L": ["England", "Croatia", "Ghana", "Panama"]};
 
 const WC_MATCHES = [
-  {id:1, group:"A", date:"2026-06-11", time:"21:00", home:"Mexico", away:"South Africa", hs:1, as_:0},
-  {id:2, group:"A", date:"2026-06-12", time:"04:00", home:"South Korea", away:"Czechia", hs:2, as_:0},
-  {id:3, group:"A", date:"2026-06-18", time:"18:00", home:"Czechia", away:"South Africa", hs:1, as_:1},
+  {id:1, group:"A", date:"2026-06-11", time:"21:00", home:"Mexico", away:"South Africa", hs:null, as_:null},
+  {id:2, group:"A", date:"2026-06-12", time:"04:00", home:"South Korea", away:"Czechia", hs:null, as_:null},
+  {id:3, group:"A", date:"2026-06-18", time:"18:00", home:"Czechia", away:"South Africa", hs:null, as_:null},
   {id:4, group:"A", date:"2026-06-19", time:"03:00", home:"Mexico", away:"South Korea", hs:null, as_:null},
   {id:5, group:"A", date:"2026-06-25", time:"03:00", home:"Czechia", away:"Mexico", hs:null, as_:null},
   {id:6, group:"A", date:"2026-06-25", time:"03:00", home:"South Africa", away:"South Korea", hs:null, as_:null},
@@ -743,6 +747,8 @@ function applyLiveData(json){
     "Round of 32":"Round of 32","Round of 16":"Round of 16",
     "Quarter-finals":"Quarter-finals","Quarterfinals":"Quarter-finals","Quarter finals":"Quarter-finals",
     "Semi-finals":"Semi-finals","Semifinals":"Semi-finals","Semi finals":"Semi-finals",
+    "Match for third place":"Third place","Third place play-off":"Third place",
+    "Third place":"Third place","Play-off for third place":"Third place",
     "Final":"Final"
   };
   // placeholders zoals "2A","1E","3A/B/C/D/F","W73" zijn GEEN echte landen
@@ -957,23 +963,74 @@ async function loadParticipants(){
   }
 }
 
-function prizeLabel(pos){
-  return {1:"1e - 35%",2:"2e - 25%",3:"3e - 15%",4:"4e - 10%"}[pos] || "";
+/* Detecteer de WK-top-3 (kampioen, verliezend finalist, 3e) zodra
+   de finale gespeeld is. Geeft een Set van uitgesloten landen terug. */
+function worldCupTop3(){
+  const excl=new Set();
+  const fin=WC_KO.find(m=>m.round==="Final" && m.hs!==null && m.as_!==null);
+  if(fin && fin.hs!==fin.as_){
+    excl.add(fin.hs>fin.as_? fin.home : fin.away); // kampioen
+    excl.add(fin.hs>fin.as_? fin.away : fin.home); // verliezend finalist
+  }
+  const tp=WC_KO.find(m=>m.round==="Third place" && m.hs!==null && m.as_!==null);
+  if(tp && tp.hs!==tp.as_){
+    excl.add(tp.hs>tp.as_? tp.home : tp.away);     // 3e plaats
+  }
+  return excl;
 }
 
-/* Bouw het deelnemersklassement uit PARTICIPANTS + computeCountryPoints(). */
+const PRIZE_TIERS=[35,25,15,10]; // %, plaats 1..4
+
+/* Bouw het deelnemersklassement met:
+   - gedeelde plaatsen bij gelijke eindscore (ex aequo)
+   - uitsluiting van deelnemers wiens land WK-top-3 werd (greyed out)
+   - prijsverdeling enkel over niet-uitgesloten deelnemers, met pooling
+     van trappen bij gedeelde plaatsen. */
 function buildKlassement(){
   const cp=computeCountryPoints();
-  const rows=PARTICIPANTS.map(p=>{
+  const excl=worldCupTop3();
+  let rows=PARTICIPANTS.map(p=>{
     const c=cp[p.country];
     return {
       name:p.name, country:p.country,
       pot: c? c.pot : (POT[p.country]||""),
-      score: c? c.score : 0
+      score: c? c.score : 0,
+      excluded: excl.has(p.country)
     };
   });
-  // sorteer: hoogste eindscore eerst; bij gelijke stand alfabetisch op naam
+  // sorteer op eindscore (hoog->laag), gelijke stand alfabetisch
   rows.sort((a,b)=> b.score-a.score || a.name.localeCompare(b.name,'nl'));
+
+  // --- gedeelde RANG toekennen (zelfde score = zelfde plaats) ---
+  let rank=0, seen=0, prevScore=null;
+  rows.forEach(r=>{
+    seen++;
+    if(prevScore===null || r.score!==prevScore){ rank=seen; prevScore=r.score; }
+    r.rank=rank;
+  });
+
+  // --- prijsverdeling: enkel niet-uitgesloten deelnemers ---
+  // We lopen de niet-uitgesloten deelnemers af in ranking-volgorde en
+  // wijzen prijstrappen 1..4 toe. Bij gedeelde score delen ze de som
+  // van de betrokken trappen.
+  const eligible=rows.filter(r=>!r.excluded);
+  // Plaats-gebaseerde prijs, doorlopend genummerd (dense ranking):
+  // elke verschillende eindscore = volgende plaats. Plaats 1=35%, 2=25%,
+  // 3=15%, 4=10% (vast). Gedeelde plaats => dat ene percentage gesplitst.
+  let place=1;   // huidige prijsplaats (1-based, telt +1 per score-groep)
+  let i=0;
+  while(i<eligible.length && place<=PRIZE_TIERS.length){
+    let j=i; while(j<eligible.length && eligible[j].score===eligible[i].score) j++;
+    const groupSize=j-i;
+    const tierPct=PRIZE_TIERS[place-1];     // vast % van DEZE plaats
+    const share=tierPct/groupSize;          // gedeeld over de ex aequo
+    for(let k=i;k<j;k++){
+      eligible[k].prize=share;
+      eligible[k].prizeRank=place;
+    }
+    place+=1;                               // doorlopend: +1, geen plaatsen overslaan
+    i=j;
+  }
   return rows;
 }
 
@@ -981,6 +1038,10 @@ function buildKlassement(){
 function fmtScore(s){
   if(typeof s!=="number") return s;
   return Number.isInteger(s)? String(s) : String(Math.round(s*100)/100).replace('.',',');
+}
+function fmtPct(p){
+  if(p==null) return "";
+  return (Number.isInteger(p)? String(p) : String(Math.round(p*10)/10).replace('.',','))+"%";
 }
 
 function renderKlassement(){
@@ -994,31 +1055,52 @@ function renderKlassement(){
     return;
   }
 
-  // Podium top 3
-  const order=[1,0,2];
-  podium.innerHTML = order.map(i=>{
-    const r=rows[i]; if(!r) return '<div></div>';
-    const cls=['p2','p1','p3'][order.indexOf(i)];
-    const medal=['🥈','🥇','🥉'][order.indexOf(i)];
-    const flag=flagImg(r.country);
-    return `<div class="pod ${cls}">
-      <span class="medal">${medal}</span>
-      <div class="rank-num">${i+1}</div>
-      <div class="who">${esc(r.name)}</div>
-      <div class="land">${flag}<span>${esc(r.country)}</span></div>
-      <div class="pts">${fmtScore(r.score)}</div>
-      <div class="prize">${['25%','35%','15%'][order.indexOf(i)]}</div>
-    </div>`;
-  }).join('');
+  // ---- Podium = eerste 3 PRIJS-plaatsen (niet-uitgesloten) ----
+  const winners=rows.filter(r=>r.prize!=null);
+  // groepeer winners per prijsrang (gedeelde plaatsen samen)
+  const byTier={};
+  winners.forEach(w=>{ (byTier[w.prizeRank]=byTier[w.prizeRank]||[]).push(w); });
+  const tierKeys=Object.keys(byTier).map(Number).sort((a,b)=>a-b).slice(0,3);
 
-  // Volledige tabel
+  // bouw podiumkaarten: midden = hoogste prijs
+  const podOrder=[1,0,2]; // visuele volgorde: 2e links, 1e midden, 3e rechts
+  const tierCards=tierKeys.map((tk,idx)=>{
+    const grp=byTier[tk];
+    const medal=['🥇','🥈','🥉'][idx];
+    const pctEach=fmtPct(grp[0].prize);
+    const names=grp.map(w=>esc(w.name)).join(' & ');
+    const flags=grp.map(w=>flagImg(w.country)).join('');
+    const placeLbl=(idx+1)+'e'+(grp.length>1?' (gedeeld)':'');
+    return {idx, html:`<div class="pod ${['p1','p2','p3'][idx]}">
+        <span class="medal">${medal}</span>
+        <div class="rank-num">${idx+1}</div>
+        <div class="who">${names}</div>
+        <div class="land">${flags}</div>
+        <div class="pts">${fmtScore(grp[0].score)}</div>
+        <div class="prize">${pctEach}${grp.length>1?' p.p.':''}</div>
+      </div>`};
+  });
+  // herorden naar [2e,1e,3e] voor de visuele opstelling
+  if(tierCards.length){
+    const arranged=[tierCards[1]||null, tierCards[0]||null, tierCards[2]||null];
+    podium.innerHTML = arranged.map(c=>c?c.html:'<div></div>').join('');
+  } else {
+    podium.innerHTML='';
+  }
+
+  // ---- Volledige tabel ----
   box.innerHTML = rows.map((r,idx)=>{
-    const pos=idx+1;
-    const topCls = pos<=4 ? `top${pos}` : '';
     const flag=flagImg(r.country);
-    const tag = pos<=4 ? `<span class="prize-tag t${pos}">${prizeLabel(pos).split(' - ')[1]}</span>` : '';
-    return `<div class="row ${topCls}" style="animation-delay:${Math.min(idx,30)*0.03}s">
-      <div class="pos">${pos}</div>
+    const exCls = r.excluded ? 'excluded' : '';
+    const topCls = (!r.excluded && r.prize!=null && r.prizeRank<=4) ? `top${r.prizeRank}` : '';
+    let tag='';
+    if(r.excluded){
+      tag='<span class="prize-tag tex">WK top 3</span>';
+    } else if(r.prize!=null){
+      tag=`<span class="prize-tag t${Math.min(r.prizeRank,4)}">${fmtPct(r.prize)}</span>`;
+    }
+    return `<div class="row ${topCls} ${exCls}" style="animation-delay:${Math.min(idx,30)*0.03}s">
+      <div class="pos">${r.rank}</div>
       <div class="name">${esc(r.name)}${tag}</div>
       <div class="country">${flag}<span>${esc(r.country)}</span></div>
       <div class="pot pot${r.pot||''}">${r.pot||''}</div>
