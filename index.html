@@ -130,12 +130,18 @@ h1{
   margin-top:6px;text-transform:uppercase;opacity:.9}
 .pod.p1{transform:translateY(-14px);border-color:rgba(255,201,40,.75);
   box-shadow:0 22px 54px -18px rgba(255,201,40,.54);animation-delay:.15s}
-.pod.p1 .rank-num,.pod.p1 .pts{color:var(--gold)}
+.pod.p1 .rank-num,.pod.p1 .pts{color:#e6a200}
 .pod.p2{animation-delay:.05s}
-.pod.p2 .rank-num,.pod.p2 .pts{color:var(--silver)}
+.pod.p2 .rank-num,.pod.p2 .pts{color:#7f93ab}
 .pod.p3{animation-delay:.25s}
-.pod.p3 .rank-num,.pod.p3 .pts{color:var(--bronze)}
-.medal{font-size:1.4rem;position:absolute;top:-14px;left:50%;transform:translateX(-50%)}
+.pod.p3 .rank-num,.pod.p3 .pts{color:#c4733a}
+.medal{position:absolute;top:-15px;left:50%;transform:translateX(-50%);
+  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  font-family:'Bebas Neue';font-size:1.05rem;color:#fff;line-height:1;
+  box-shadow:0 4px 12px rgba(20,55,110,.28);border:2px solid #fff}
+.pod.p1 .medal{background:linear-gradient(145deg,#ffd95e,#e6a200)}
+.pod.p2 .medal{background:linear-gradient(145deg,#cdd8e6,#8295ad)}
+.pod.p3 .medal{background:linear-gradient(145deg,#e3a06a,#c4733a)}
 @keyframes rise{from{opacity:0;transform:translateY(24px)}}
 .pod.p1{animation-name:rise1}
 @keyframes rise1{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(-14px)}}
@@ -206,12 +212,16 @@ footer .powered .brand{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;let
   .board-head .h-country,.country{display:none}
 }
 
-/* ----- VLAG-AFBEELDINGEN (flagcdn.com) ----- */
-.flag{width:26px;height:auto;border-radius:3px;vertical-align:middle;margin-right:8px;
-  box-shadow:0 2px 8px rgba(20,55,110,.15);object-fit:cover}
+/* ----- VLAG-AFBEELDINGEN (flagcdn.com) -----
+   Vaste breedte EN hoogte (3:2-verhouding) met object-fit:cover, zodat
+   elke vlag exact dezelfde grootte heeft — ook vierkante (Zwitserland) of
+   extra brede (Qatar). De cover-modus snijdt netjes bij i.p.v. te vervormen. */
+.flag{width:28px;height:19px;border-radius:3px;vertical-align:middle;margin-right:8px;
+  box-shadow:0 2px 8px rgba(20,55,110,.15);object-fit:cover;display:inline-block;
+  background:#eef2f7;flex:0 0 auto}
 .country{display:flex;align-items:center}
 .pod .land{display:flex;align-items:center;justify-content:center}
-.pod .land .flag{width:22px;margin-right:6px}
+.pod .land .flag{width:24px;height:16px;margin-right:6px}
 @media(max-width:560px){ .country .flag{display:none} }
 
 /* ----- TABS ----- */
@@ -247,7 +257,7 @@ footer .powered .brand{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;let
 .match .kickoff{font-size:.72rem;color:var(--text-dim);line-height:1.25}
 .match .kickoff .d{display:block;font-weight:800;color:var(--text)}
 .match .grp{font-size:.62rem;color:var(--text-dim);letter-spacing:.08em}
-.match .flag{width:22px;margin:0}
+.match .flag{width:24px;height:16px;margin:0}
 .live-empty{color:var(--text-dim);font-size:.82rem;padding:20px 4px;text-align:center}
 @media(max-width:680px){ .live-wrap{grid-template-columns:1fr} }
 
@@ -265,7 +275,7 @@ footer .powered .brand{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;let
 .gtable td{padding:9px 6px;text-align:center;border-bottom:1px solid rgba(24,62,118,.08)}
 .gtable tr:last-child td{border-bottom:none}
 .gtable td.team{text-align:left;padding-left:14px;font-weight:700;display:flex;align-items:center;gap:8px}
-.gtable td.team .flag{width:22px;margin:0}
+.gtable td.team .flag{width:24px;height:16px;margin:0}
 .gtable .pts{font-weight:800;color:#0b78ff}
 .gtable tr.qual{background:linear-gradient(90deg,rgba(32,200,107,.12),transparent)}
 .gtable tr.qual td:first-child{box-shadow:inset 3px 0 0 var(--pot1)}
@@ -396,8 +406,8 @@ function flagImg(country){
     for(const k in FLAG_CODE){ if(k.toLowerCase()===lower){ code=FLAG_CODE[k]; break; } }
   }
   if(!code) return '';
-  return '<img class="flag" src="https://flagcdn.com/w40/'+code+'.png" '+
-         'srcset="https://flagcdn.com/w80/'+code+'.png 2x" alt="" loading="lazy" '+
+  return '<img class="flag" src="https://flagcdn.com/w80/'+code+'.png" '+
+         'srcset="https://flagcdn.com/w160/'+code+'.png 2x" alt="" loading="lazy" '+
          'onerror="this.style.display=&#39;none&#39;">';
 }
 
@@ -419,22 +429,22 @@ document.getElementById('subtitle').textContent =
 const WC_GROUPS = {"A": ["Mexico", "South Africa", "South Korea", "Czechia"], "B": ["Canada", "Bosnia-Herzegovina", "Qatar", "Switzerland"], "C": ["Brazil", "Morocco", "Haiti", "Scotland"], "D": ["United States", "Paraguay", "Australia", "Turkiye"], "E": ["Germany", "Curacao", "Ivory Coast", "Ecuador"], "F": ["Netherlands", "Japan", "Sweden", "Tunisia"], "G": ["Belgium", "Egypt", "Iran", "New Zealand"], "H": ["Spain", "Cape Verde", "Saudi Arabia", "Uruguay"], "I": ["France", "Senegal", "Iraq", "Norway"], "J": ["Argentina", "Algeria", "Austria", "Jordan"], "K": ["Portugal", "Congo DR", "Uzbekistan", "Colombia"], "L": ["England", "Croatia", "Ghana", "Panama"]};
 
 const WC_MATCHES = [
-  {id:1, group:"A", date:"2026-06-11", time:"21:00", home:"Mexico", away:"South Africa", hs:1, as_:0},
-  {id:2, group:"A", date:"2026-06-12", time:"04:00", home:"South Korea", away:"Czechia", hs:1, as_:0},
-  {id:3, group:"A", date:"2026-06-18", time:"18:00", home:"Czechia", away:"South Africa", hs:1, as_:0},
-  {id:4, group:"A", date:"2026-06-19", time:"03:00", home:"Mexico", away:"South Korea", hs:1, as_:0},
+  {id:1, group:"A", date:"2026-06-11", time:"21:00", home:"Mexico", away:"South Africa", hs:null, as_:null},
+  {id:2, group:"A", date:"2026-06-12", time:"04:00", home:"South Korea", away:"Czechia", hs:null, as_:null},
+  {id:3, group:"A", date:"2026-06-18", time:"18:00", home:"Czechia", away:"South Africa", hs:null, as_:null},
+  {id:4, group:"A", date:"2026-06-19", time:"03:00", home:"Mexico", away:"South Korea", hs:null, as_:null},
   {id:5, group:"A", date:"2026-06-25", time:"03:00", home:"Czechia", away:"Mexico", hs:null, as_:null},
   {id:6, group:"A", date:"2026-06-25", time:"03:00", home:"South Africa", away:"South Korea", hs:null, as_:null},
   {id:7, group:"B", date:"2026-06-12", time:"21:00", home:"Canada", away:"Bosnia-Herzegovina", hs:null, as_:null},
   {id:8, group:"B", date:"2026-06-13", time:"21:00", home:"Qatar", away:"Switzerland", hs:null, as_:null},
-  {id:9, group:"B", date:"2026-06-18", time:"21:00", home:"Switzerland", away:"Bosnia-Herzegovina", hs:1, as_:0},
-  {id:10, group:"B", date:"2026-06-19", time:"00:00", home:"Canada", away:"Qatar", hs:1, as_:0},
-  {id:11, group:"B", date:"2026-06-24", time:"21:00", home:"Switzerland", away:"Canada", hs:1, as_:0},
+  {id:9, group:"B", date:"2026-06-18", time:"21:00", home:"Switzerland", away:"Bosnia-Herzegovina", hs:null, as_:null},
+  {id:10, group:"B", date:"2026-06-19", time:"00:00", home:"Canada", away:"Qatar", hs:null, as_:null},
+  {id:11, group:"B", date:"2026-06-24", time:"21:00", home:"Switzerland", away:"Canada", hs:null, as_:null},
   {id:12, group:"B", date:"2026-06-24", time:"21:00", home:"Bosnia-Herzegovina", away:"Qatar", hs:null, as_:null},
   {id:13, group:"D", date:"2026-06-13", time:"03:00", home:"United States", away:"Paraguay", hs:null, as_:null},
   {id:14, group:"D", date:"2026-06-14", time:"06:00", home:"Australia", away:"Turkiye", hs:null, as_:null},
   {id:15, group:"D", date:"2026-06-19", time:"21:00", home:"United States", away:"Australia", hs:null, as_:null},
-  {id:16, group:"D", date:"2026-06-20", time:"03:00", home:"Turkiye", away:"Paraguay", hs:1, as_:0},
+  {id:16, group:"D", date:"2026-06-20", time:"03:00", home:"Turkiye", away:"Paraguay", hs:null, as_:null},
   {id:17, group:"D", date:"2026-06-25", time:"21:00", home:"Turkiye", away:"United States", hs:null, as_:null},
   {id:18, group:"D", date:"2026-06-25", time:"21:00", home:"Paraguay", away:"Australia", hs:null, as_:null},
   {id:19, group:"C", date:"2026-06-14", time:"00:00", home:"Brazil", away:"Morocco", hs:null, as_:null},
@@ -959,7 +969,7 @@ function renderKlassement(){
   const podOrder=[1,0,2]; // visuele volgorde: 2e links, 1e midden, 3e rechts
   const tierCards=tierKeys.map((tk,idx)=>{
     const grp=byTier[tk];
-    const medal=['🥇','🥈','🥉'][idx];
+    const medal=String(idx+1);
     const pctEach=fmtPct(grp[0].prize);
     const names=grp.map(w=>esc(w.name)).join(' & ');
     const flags=grp.map(w=>flagImg(w.country)).join('');
