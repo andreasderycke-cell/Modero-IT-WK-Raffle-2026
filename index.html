@@ -128,13 +128,14 @@ h1{
 .pod .prize{font-size:.72rem;font-weight:800;letter-spacing:.04em;
   margin-top:6px;text-transform:uppercase;opacity:.9}
 /* gedeelde plaats: deelnemers per land gegroepeerd */
-.pod .cgroups{margin-top:6px;display:flex;flex-direction:column;gap:7px;align-items:center}
-.pod .cg{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.2}
-.pod .cg-head{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.82rem}
-.pod .cg .flag{margin:0}
+.pod .cgroups{margin:6px auto 0;width:max-content;max-width:100%;
+  display:flex;flex-direction:column;gap:8px}
+.pod .cg{display:flex;flex-direction:column;align-items:stretch;gap:2px;line-height:1.2;width:100%}
+.pod .cg-head{display:flex;align-items:center;gap:8px;font-size:.82rem;text-align:left}
+.pod .cg-head .flag{margin:0;flex:0 0 auto}
 .pod .cg-land{font-weight:800;color:var(--text)}
 .pod .cg-names{color:var(--text-dim);font-size:.78rem;text-align:center}
-.pod .cg-cnt{color:var(--text-dim);font-weight:700}
+.pod .cg-cnt{color:var(--text-dim);font-weight:700;margin-left:auto;padding-left:6px}
 .pod.p1{transform:translateY(-14px);border-color:rgba(255,201,40,.85);
   background:linear-gradient(180deg,rgba(255,240,190,.92),rgba(255,250,235,.9));
   box-shadow:0 22px 54px -18px rgba(255,201,40,.5);animation-delay:.15s}
