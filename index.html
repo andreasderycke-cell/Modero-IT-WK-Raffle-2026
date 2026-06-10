@@ -135,24 +135,34 @@ h1{
 .pod .cg-land{font-weight:800;color:var(--text)}
 .pod .cg-names{color:var(--text-dim);font-size:.78rem;text-align:center}
 .pod .cg-cnt{color:var(--text-dim);font-weight:700}
-.pod.p1{transform:translateY(-14px);border-color:rgba(255,201,40,.75);
-  box-shadow:0 22px 54px -18px rgba(255,201,40,.54);animation-delay:.15s}
+.pod.p1{transform:translateY(-14px);border-color:rgba(255,201,40,.85);
+  background:linear-gradient(180deg,rgba(255,240,190,.92),rgba(255,250,235,.9));
+  box-shadow:0 22px 54px -18px rgba(255,201,40,.5);animation-delay:.15s}
 .pod.p1 .pts{color:#e6a200}
-.pod.p2{animation-delay:.05s}
+.pod.p2{animation-delay:.05s;border-color:rgba(150,170,195,.6);
+  background:linear-gradient(180deg,rgba(228,235,244,.92),rgba(248,251,254,.9))}
 .pod.p2 .pts{color:#7f93ab}
-.pod.p3{animation-delay:.25s}
+.pod.p3{animation-delay:.25s;border-color:rgba(217,138,75,.5);
+  background:linear-gradient(180deg,rgba(248,224,203,.92),rgba(255,247,240,.9))}
 .pod.p3 .pts{color:#c4733a}
 
-/* ----- MEDAILLE (simpel: nette gekleurde cirkel met nummer) ----- */
-.medal{position:absolute;top:-16px;left:50%;transform:translateX(-50%);
-  width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
-  font-family:'Bebas Neue';font-size:1.1rem;line-height:1;color:#fff;
-  border:2px solid #fff;box-shadow:0 3px 10px rgba(20,55,110,.25)}
+/* ----- MEDAILLE (glanzende schijf met gekleurde rand) ----- */
+.medal{position:absolute;top:-17px;left:50%;transform:translateX(-50%);
+  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  font-family:'Bebas Neue';font-size:1.15rem;line-height:1;color:#fff;
+  border:3px solid #fff;
+  box-shadow:0 4px 12px rgba(20,55,110,.28),
+             inset 0 -3px 5px rgba(0,0,0,.22),
+             inset 0 3px 5px rgba(255,255,255,.55);
+  text-shadow:0 1px 2px rgba(0,0,0,.28);overflow:hidden}
 .medal .ribbon{display:none}
 .medal .disc{display:contents}
-.pod.p1 .medal{background:#ffc928}
-.pod.p2 .medal{background:#aab8c8}
-.pod.p3 .medal{background:#d98a4b}
+/* glansplekje linksboven */
+.medal::after{content:"";position:absolute;top:4px;left:8px;width:12px;height:8px;
+  border-radius:50%;background:rgba(255,255,255,.6);filter:blur(1px);transform:rotate(-20deg)}
+.pod.p1 .medal{background:radial-gradient(circle at 36% 30%,#ffe98a,#ffcf3a 45%,#e0a200 100%)}
+.pod.p2 .medal{background:radial-gradient(circle at 36% 30%,#eef3f9,#c2cedd 45%,#8295ad 100%)}
+.pod.p3 .medal{background:radial-gradient(circle at 36% 30%,#f5c79c,#e09a5f 45%,#c4733a 100%)}
 @keyframes rise{from{opacity:0;transform:translateY(24px)}}
 .pod.p1{animation-name:rise1}
 @keyframes rise1{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(-14px)}}
@@ -476,38 +486,38 @@ const WC_MATCHES = [
   {id:34, group:"F", date:"2026-06-21", time:"05:00", home:"Tunisia", away:"Japan", hs:null, as_:null},
   {id:35, group:"F", date:"2026-06-26", time:"01:00", home:"Japan", away:"Sweden", hs:null, as_:null},
   {id:36, group:"F", date:"2026-06-26", time:"01:00", home:"Tunisia", away:"Netherlands", hs:null, as_:null},
-  {id:37, group:"H", date:"2026-06-15", time:"18:00", home:"Spain", away:"Cape Verde", hs:null, as_:null},
-  {id:38, group:"H", date:"2026-06-16", time:"00:00", home:"Saudi Arabia", away:"Uruguay", hs:null, as_:null},
+  {id:37, group:"H", date:"2026-06-15", time:"18:00", home:"Spain", away:"Cape Verde", hs:1, as_:0},
+  {id:38, group:"H", date:"2026-06-16", time:"00:00", home:"Saudi Arabia", away:"Uruguay", hs:1, as_:0},
   {id:39, group:"H", date:"2026-06-21", time:"18:00", home:"Spain", away:"Saudi Arabia", hs:null, as_:null},
   {id:40, group:"H", date:"2026-06-22", time:"00:00", home:"Uruguay", away:"Cape Verde", hs:null, as_:null},
   {id:41, group:"H", date:"2026-06-27", time:"01:00", home:"Uruguay", away:"Spain", hs:null, as_:null},
   {id:42, group:"H", date:"2026-06-27", time:"01:00", home:"Cape Verde", away:"Saudi Arabia", hs:null, as_:null},
-  {id:43, group:"G", date:"2026-06-15", time:"21:00", home:"Belgium", away:"Egypt", hs:null, as_:null},
-  {id:44, group:"G", date:"2026-06-16", time:"03:00", home:"Iran", away:"New Zealand", hs:null, as_:null},
+  {id:43, group:"G", date:"2026-06-15", time:"21:00", home:"Belgium", away:"Egypt", hs:1, as_:0},
+  {id:44, group:"G", date:"2026-06-16", time:"03:00", home:"Iran", away:"New Zealand", hs:1, as_:0},
   {id:45, group:"G", date:"2026-06-21", time:"21:00", home:"Belgium", away:"Iran", hs:null, as_:null},
   {id:46, group:"G", date:"2026-06-22", time:"03:00", home:"New Zealand", away:"Egypt", hs:null, as_:null},
   {id:47, group:"G", date:"2026-06-27", time:"05:00", home:"Egypt", away:"Iran", hs:null, as_:null},
   {id:48, group:"G", date:"2026-06-27", time:"05:00", home:"New Zealand", away:"Belgium", hs:null, as_:null},
-  {id:49, group:"I", date:"2026-06-16", time:"21:00", home:"France", away:"Senegal", hs:null, as_:null},
-  {id:50, group:"I", date:"2026-06-17", time:"00:00", home:"Iraq", away:"Norway", hs:null, as_:null},
+  {id:49, group:"I", date:"2026-06-16", time:"21:00", home:"France", away:"Senegal", hs:1, as_:0},
+  {id:50, group:"I", date:"2026-06-17", time:"00:00", home:"Iraq", away:"Norway", hs:1, as_:0},
   {id:51, group:"I", date:"2026-06-22", time:"21:00", home:"Norway", away:"Senegal", hs:null, as_:null},
   {id:52, group:"I", date:"2026-06-23", time:"00:00", home:"France", away:"Iraq", hs:null, as_:null},
   {id:53, group:"I", date:"2026-06-27", time:"03:00", home:"Norway", away:"France", hs:null, as_:null},
   {id:54, group:"I", date:"2026-06-27", time:"03:00", home:"Senegal", away:"Iraq", hs:null, as_:null},
-  {id:55, group:"J", date:"2026-06-17", time:"03:00", home:"Argentina", away:"Algeria", hs:null, as_:null},
-  {id:56, group:"J", date:"2026-06-17", time:"06:00", home:"Austria", away:"Jordan", hs:null, as_:null},
+  {id:55, group:"J", date:"2026-06-17", time:"03:00", home:"Argentina", away:"Algeria", hs:1, as_:0},
+  {id:56, group:"J", date:"2026-06-17", time:"06:00", home:"Austria", away:"Jordan", hs:1, as_:0},
   {id:57, group:"J", date:"2026-06-23", time:"01:00", home:"Argentina", away:"Austria", hs:null, as_:null},
   {id:58, group:"J", date:"2026-06-23", time:"05:00", home:"Jordan", away:"Algeria", hs:null, as_:null},
   {id:59, group:"J", date:"2026-06-28", time:"04:00", home:"Jordan", away:"Argentina", hs:null, as_:null},
   {id:60, group:"J", date:"2026-06-28", time:"04:00", home:"Algeria", away:"Austria", hs:null, as_:null},
-  {id:61, group:"K", date:"2026-06-17", time:"19:00", home:"Portugal", away:"Congo DR", hs:null, as_:null},
-  {id:62, group:"K", date:"2026-06-18", time:"04:00", home:"Uzbekistan", away:"Colombia", hs:null, as_:null},
+  {id:61, group:"K", date:"2026-06-17", time:"19:00", home:"Portugal", away:"Congo DR", hs:1, as_:0},
+  {id:62, group:"K", date:"2026-06-18", time:"04:00", home:"Uzbekistan", away:"Colombia", hs:1, as_:0},
   {id:63, group:"K", date:"2026-06-23", time:"19:00", home:"Colombia", away:"Congo DR", hs:null, as_:null},
   {id:64, group:"K", date:"2026-06-24", time:"01:00", home:"Portugal", away:"Uzbekistan", hs:null, as_:null},
   {id:65, group:"K", date:"2026-06-27", time:"21:00", home:"Colombia", away:"Portugal", hs:null, as_:null},
   {id:66, group:"K", date:"2026-06-27", time:"21:00", home:"Congo DR", away:"Uzbekistan", hs:null, as_:null},
-  {id:67, group:"L", date:"2026-06-17", time:"22:00", home:"England", away:"Croatia", hs:null, as_:null},
-  {id:68, group:"L", date:"2026-06-18", time:"01:00", home:"Ghana", away:"Panama", hs:null, as_:null},
+  {id:67, group:"L", date:"2026-06-17", time:"22:00", home:"England", away:"Croatia", hs:1, as_:0},
+  {id:68, group:"L", date:"2026-06-18", time:"01:00", home:"Ghana", away:"Panama", hs:1, as_:0},
   {id:69, group:"L", date:"2026-06-23", time:"22:00", home:"England", away:"Ghana", hs:null, as_:null},
   {id:70, group:"L", date:"2026-06-24", time:"01:00", home:"Panama", away:"Croatia", hs:null, as_:null},
   {id:71, group:"L", date:"2026-06-27", time:"23:00", home:"Panama", away:"England", hs:null, as_:null},
