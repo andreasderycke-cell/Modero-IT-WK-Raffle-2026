@@ -632,6 +632,7 @@ function initTabs(){
    ================================================================ */
 
 const LIVE_URL = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
+const WC26_URL = "https://worldcup26.ir/get/games";   // primaire bron (live scores, geen sleutel nodig)
 const MANUAL_OVERRIDE = false;   // zet op true om ENKEL je eigen WC_MATCHES te tonen
 
 /* Vertaaltabel: openfootball-naam  ->  onze naam.
@@ -658,8 +659,62 @@ const NAME_MAP = {
 };
 function mapName(n){ if(!n) return n; const t=n.trim(); return NAME_MAP[t] || t; }
 
-/* Zet openfootball-data om: groepsfase koppelen aan WC_MATCHES, en
-   knockout-matchen verzamelen in WC_KO (enkel met echte landnamen). */
+/* Zet de respons van worldcup26.ir om naar dezelfde vorm als openfootball
+   ({matches:[{team1,team2,group,round,score:{ft:[h,a]}}]}). De API-documentatie
+   zit achter Swagger, dus we vangen meerdere mogelijke veldnamen defensief af.
+   Lukt het omzetten niet, dan geven we null terug en valt de pagina terug op
+   openfootball. */
+function normalizeWC26(raw){
+  if(!raw) return null;
+  // de lijst kan onder verschillende sleutels zitten
+  let list = Array.isArray(raw) ? raw
+           : (raw.games || raw.matches || raw.data || raw.result || raw.results || null);
+  if(!Array.isArray(list) || !list.length) return null;
+
+  const pick = (o,keys)=>{ for(const k of keys){ if(o && o[k]!=null) return o[k]; } return undefined; };
+  const teamName = (v)=>{
+    if(v==null) return undefined;
+    if(typeof v==="string") return v;
+    if(typeof v==="object") return pick(v,["name","title","team","country","en","name_en","englishName"]);
+    return undefined;
+  };
+  const toNum = (v)=> (v===null||v===undefined||v==="") ? null : (isNaN(+v)? null : +v);
+
+  const matches = list.map(g=>{
+    // teamnamen
+    const t1 = teamName(pick(g,["home_team","homeTeam","team1","home","teamA","team_home","home_team_name"]))
+            || teamName(g.home) ;
+    const t2 = teamName(pick(g,["away_team","awayTeam","team2","away","teamB","team_away","away_team_name"]))
+            || teamName(g.away);
+    // scores (kunnen los of in een score-object zitten)
+    let hs = toNum(pick(g,["home_score","homeScore","score1","home_goals","homeGoals","goals_home","fthg"]));
+    let as_= toNum(pick(g,["away_score","awayScore","score2","away_goals","awayGoals","goals_away","ftag"]));
+    const sc = g.score || g.result || g.ft;
+    if((hs===null||as_===null) && sc){
+      if(Array.isArray(sc)){ hs=toNum(sc[0]); as_=toNum(sc[1]); }
+      else if(Array.isArray(sc.ft)){ hs=toNum(sc.ft[0]); as_=toNum(sc.ft[1]); }
+      else { hs=toNum(pick(sc,["home","h","home_score","1"])); as_=toNum(pick(sc,["away","a","away_score","2"])); }
+    }
+    // groep en ronde
+    let grp = pick(g,["group","group_name","groupLabel","group_label","groupName"]);
+    if(grp!=null) grp = String(grp).replace(/group/i,"").trim();
+    let round = pick(g,["round","stage","stage_name","phase","round_name"]);
+    // alleen status "finished/ft" telt als gespeeld; anders scores negeren
+    const status = (pick(g,["status","state","matchStatus"])||"").toString().toLowerCase();
+    const looksFinished = /fin|ft|full|ended|complete|played|result/.test(status);
+    const hasScore = hs!==null && as_!==null;
+    const obj = {
+      team1: t1, team2: t2,
+      group: grp ? ("Group "+grp) : undefined,
+      round: round || undefined,
+      score: (hasScore && (looksFinished || !status)) ? {ft:[hs,as_]} : undefined
+    };
+    return obj;
+  }).filter(m=>m.team1 && m.team2);
+
+  if(!matches.length) return null;
+  return {name:"World Cup 2026 (worldcup26.ir)", matches};
+}
 function applyLiveData(json){
   if(!json || !Array.isArray(json.matches)) return false;
   WC_KO = [];
@@ -706,15 +761,37 @@ function applyLiveData(json){
 async function loadLiveData(){
   const note=document.getElementById('liveSource');
   if(MANUAL_OVERRIDE){ if(note) note.textContent="Bron: handmatig ingevuld"; renderLive(); renderGroups(); renderKlassement(); return; }
+
+  const stamp = ()=> new Date().toLocaleString('nl-BE');
+  let loaded = false;
+
+  // 1) Primair: worldcup26.ir (live scores, geen sleutel)
   try{
-    const res=await fetch(LIVE_URL, {cache:"no-store"});
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    const json=await res.json();
-    applyLiveData(json);
-    if(note) note.textContent="Bron: openfootball (automatisch) — laatst geladen "+new Date().toLocaleString('nl-BE');
-  }catch(e){
-    if(note) note.textContent="Bron: handmatig (automatische data niet bereikbaar)";
+    const res=await fetch(WC26_URL, {cache:"no-store"});
+    if(res.ok){
+      const raw=await res.json();
+      const norm=normalizeWC26(raw);
+      if(norm && applyLiveData(norm)){
+        loaded=true;
+        if(note) note.textContent="Bron: worldcup26.ir (live) — laatst geladen "+stamp();
+      }
+    }
+  }catch(e){ /* val stil terug op openfootball */ }
+
+  // 2) Terugval: openfootball
+  if(!loaded){
+    try{
+      const res=await fetch(LIVE_URL, {cache:"no-store"});
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      const json=await res.json();
+      applyLiveData(json);
+      loaded=true;
+      if(note) note.textContent="Bron: openfootball (automatisch) — laatst geladen "+stamp();
+    }catch(e){
+      if(note) note.textContent="Bron: handmatig (automatische data niet bereikbaar)";
+    }
   }
+
   // herteken alles met (mogelijk) bijgewerkte data
   renderLive(); renderGroups(); renderKlassement();
 }
