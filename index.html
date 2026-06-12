@@ -631,7 +631,7 @@ function initTabs(){
      MANUAL_OVERRIDE hieronder om de auto-data te negeren als je wil.
    ================================================================ */
 
-const LIVE_URL = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
+const LIVE_URL = "https://modero-wk2026-scores.andreas-de-rycke.workers.dev/wc2026/matches";
 const WC26_URL = "https://worldcup26.ir/get/games";   // primaire bron (live scores, geen sleutel nodig)
 const MANUAL_OVERRIDE = false;   // zet op true om ENKEL je eigen WC_MATCHES te tonen
 
@@ -639,22 +639,37 @@ const MANUAL_OVERRIDE = false;   // zet op true om ENKEL je eigen WC_MATCHES te 
    Bevat de 6 playoff-plekken (nu al ingevuld met de gekende landen)
    plus kleine schrijfwijze-verschillen. */
 const NAME_MAP = {
-  // playoff-winnaars (gekend, ondervangt de placeholders in de bron)
+  // playoff-winnaars / placeholders
   "UEFA Path A winner": "Bosnia-Herzegovina",
   "UEFA Path B winner": "Sweden",
   "UEFA Path C winner": "Turkiye",
   "UEFA Path D winner": "Czechia",
   "IC Path 1 winner": "Congo DR",
   "IC Path 2 winner": "Iraq",
+
   // schrijfwijze-verschillen
   "USA": "United States",
+  "US": "United States",
+  "United States of America": "United States",
+
   "Curaçao": "Curacao",
+
   "Czech Republic": "Czechia",
+
   "Türkiye": "Turkiye",
+  "Turkey": "Turkiye",
+
   "Cabo Verde": "Cape Verde",
+
   "Côte d'Ivoire": "Ivory Coast",
+  "Côte d’Ivoire": "Ivory Coast",
+
   "Korea Republic": "South Korea",
+  "Republic of Korea": "South Korea",
+
   "DR Congo": "Congo DR",
+  "Democratic Republic of the Congo": "Congo DR",
+
   "Republic of Ireland": "Ireland"
 };
 function mapName(n){ if(!n) return n; const t=n.trim(); return NAME_MAP[t] || t; }
@@ -715,46 +730,102 @@ function normalizeWC26(raw){
   if(!matches.length) return null;
   return {name:"World Cup 2026 (worldcup26.ir)", matches};
 }
-function applyLiveData(json){
-  if(!json || !Array.isArray(json.matches)) return false;
-  WC_KO = [];
-  // ronde-namen van openfootball naar onze labels
-  const KO_ROUNDS={
-    "Round of 32":"Round of 32","Round of 16":"Round of 16",
-    "Quarter-finals":"Quarter-finals","Quarterfinals":"Quarter-finals","Quarter finals":"Quarter-finals",
-    "Semi-finals":"Semi-finals","Semifinals":"Semi-finals","Semi finals":"Semi-finals",
-    "Match for third place":"Third place","Third place play-off":"Third place",
-    "Third place":"Third place","Play-off for third place":"Third place",
-    "Final":"Final"
-  };
-  // placeholders zoals "2A","1E","3A/B/C/D/F","W73" zijn GEEN echte landen
-  const isPlaceholder=(s)=> !s || /^[0-9]/.test(s.trim()) || /^[WL]\d/.test(s.trim()) || s.includes("/");
+function normalizeFootballDataMatch(fm) {
+  const home = mapName(fm.homeTeam && fm.homeTeam.name);
+  const away = mapName(fm.awayTeam && fm.awayTeam.name);
 
-  json.matches.forEach(fm=>{
-    const t1=mapName(fm.team1), t2=mapName(fm.team2);
-    if(fm.group){
-      // ---- groepsfase ----
-      const grp=(fm.group||"").replace("Group ","").trim();
-      const local=WC_MATCHES.find(m=>m.group===grp &&
-        ((m.home===t1 && m.away===t2) || (m.home===t2 && m.away===t1)));
-      if(!local) return;
-      const sc = fm.score && (fm.score.ft || fm.score.FT);
-      if(Array.isArray(sc) && sc.length===2 && sc[0]!==null && sc[1]!==null){
-        if(local.home===t1){ local.hs=sc[0]; local.as_=sc[1]; }
-        else { local.hs=sc[1]; local.as_=sc[0]; }
+  const score = fm.score || {};
+  const fullTime = score.fullTime || {};
+  const halfTime = score.halfTime || {};
+
+  const homeScore =
+    typeof fullTime.home === "number" ? fullTime.home :
+    typeof halfTime.home === "number" ? halfTime.home :
+    null;
+
+  const awayScore =
+    typeof fullTime.away === "number" ? fullTime.away :
+    typeof halfTime.away === "number" ? halfTime.away :
+    null;
+
+  return {
+    utcDate: fm.utcDate,
+    status: fm.status,
+    stage: fm.stage,
+    group: fm.group,
+    home,
+    away,
+    hs: homeScore,
+    as_: awayScore,
+  };
+}
+
+function applyLiveData(json) {
+  if (!json || !Array.isArray(json.matches)) return false;
+
+  WC_KO = [];
+
+  const KO_ROUNDS = {
+    "LAST_32": "Round of 32",
+    "LAST_16": "Round of 16",
+    "QUARTER_FINALS": "Quarter-finals",
+    "SEMI_FINALS": "Semi-finals",
+    "THIRD_PLACE": "Third place",
+    "FINAL": "Final",
+  };
+
+  const isPlaceholder = (s) =>
+    !s ||
+    /^[0-9]/.test(String(s).trim()) ||
+    /^[WL]\d/.test(String(s).trim()) ||
+    String(s).includes("/");
+
+  json.matches.forEach(raw => {
+    const fm = normalizeFootballDataMatch(raw);
+    if (!fm.home || !fm.away) return;
+
+    if (raw.stage === "GROUP_STAGE" || fm.group) {
+      const grp = String(fm.group || "")
+        .replace("GROUP_", "")
+        .replace("Group ", "")
+        .trim();
+
+      const local = WC_MATCHES.find(m =>
+        m.group === grp &&
+        (
+          (m.home === fm.home && m.away === fm.away) ||
+          (m.home === fm.away && m.away === fm.home)
+        )
+      );
+
+      if (!local) return;
+
+      if (fm.hs !== null && fm.as_ !== null) {
+        if (local.home === fm.home) {
+          local.hs = fm.hs;
+          local.as_ = fm.as_;
+        } else {
+          local.hs = fm.as_;
+          local.as_ = fm.hs;
+        }
       }
-    } else if(fm.round && KO_ROUNDS[fm.round.trim()]){
-      // ---- knockout ---- enkel opnemen als beide teams echte landen zijn
-      if(isPlaceholder(fm.team1) || isPlaceholder(fm.team2)) return;
-      const sc = fm.score && (fm.score.ft || fm.score.FT);
-      WC_KO.push({
-        round: KO_ROUNDS[fm.round.trim()],
-        home: t1, away: t2,
-        hs: Array.isArray(sc)? sc[0] : null,
-        as_: Array.isArray(sc)? sc[1] : null
-      });
+
+      return;
     }
+
+    const round = KO_ROUNDS[raw.stage];
+    if (!round) return;
+    if (isPlaceholder(fm.home) || isPlaceholder(fm.away)) return;
+
+    WC_KO.push({
+      round,
+      home: fm.home,
+      away: fm.away,
+      hs: fm.hs,
+      as_: fm.as_,
+    });
   });
+
   return true;
 }
 
@@ -786,7 +857,7 @@ async function loadLiveData(){
       const json=await res.json();
       applyLiveData(json);
       loaded=true;
-      if(note) note.textContent="Bron: openfootball (automatisch) — laatst geladen "+stamp();
+      if(note) note.textContent="Bron: football-data.org via Modero proxy — laatst geladen "+new Date().toLocaleString('nl-BE');
     }catch(e){
       if(note) note.textContent="Bron: handmatig (automatische data niet bereikbaar)";
     }
